@@ -4,86 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#090b0d">
-  <meta name="description" content="A hyper-realistic 2.5D furnishing and property-flipping game.">
+  <meta name="description" content="Build, furnish, and flip a hyper-realistic 2.5D home.">
   <title>Nth House</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23090b0d'/%3E%3Cpath d='M10 31 32 12l22 19v23H38V39H26v15H10Z' fill='%23a61522'/%3E%3Cpath d='M17 31 32 18l15 13' fill='none' stroke='%23f1d7ae' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main id="game" aria-label="Nth House game">
+  <main id="game">
     <section id="welcome" class="welcome" aria-labelledby="welcome-title">
       <div class="welcome-panel">
         <div class="brand-mark" aria-hidden="true"><span>N</span></div>
         <p class="eyebrow">A NTH EXPERIENCE</p>
         <h1 id="welcome-title">NTH HOUSE</h1>
-        <p class="welcome-copy">Your first property is waiting. Furnish it with <strong>₢35,000</strong>, shape every room, then win the right buyer.</p>
+        <p class="welcome-copy">Ashbury Row is yours to transform. Furnish every space with <strong>₢35,000</strong>, then find the buyer who understands your vision.</p>
         <button id="enter-game" class="primary big">ENTER PROPERTY</button>
-        <p class="orientation-note">For the full experience, rotate your device to landscape.</p>
+        <p class="orientation-note">Rotate your device to landscape.</p>
       </div>
     </section>
-
     <header class="hud glass">
-      <div class="wordmark"><span class="nth">NTH</span><span>HOUSE</span></div>
-      <div class="property-title">
-        <span id="room-label">ASHBURY ROW · EXTERIOR</span>
-        <small id="corner-label">FRONT APPROACH</small>
-      </div>
+      <button id="map-toggle" class="wordmark" aria-label="Open house map"><span class="nth">NTH</span><span>HOUSE</span></button>
+      <div class="property-title"><span id="room-label">ASHBURY ROW · EXTERIOR</span><small id="corner-label">FRONT APPROACH</small></div>
       <div class="hud-actions">
-        <div class="budget" aria-label="Remaining budget"><small>AVAILABLE</small><strong id="budget">₢35,000</strong></div>
+        <div class="room-score"><small>ROOM</small><strong id="room-score">0%</strong></div>
+        <div class="budget"><small>AVAILABLE</small><strong id="budget">₢35,000</strong></div>
         <button id="open-house" class="secondary">OPEN HOUSE</button>
         <button id="shop-toggle" class="icon-button" aria-label="Open furnishing catalog" aria-expanded="false"><span></span><span></span><span></span></button>
       </div>
     </header>
-
-    <section id="scene" class="scene exterior" aria-label="Exterior property scene">
-      <div class="scene-shade"></div>
-      <button id="door-hotspot" class="door-hotspot" aria-label="Double tap to enter the living room"><span>DOUBLE TAP TO ENTER</span></button>
-      <div id="object-layer" class="object-layer" aria-live="polite"></div>
+    <section id="scene" class="scene" aria-label="Property scene">
+      <div id="scene-bg" class="scene-bg"></div><div class="scene-shade"></div>
+      <button id="door-hotspot" class="door-hotspot" aria-label="Double tap doorway"><span id="door-label">DOUBLE TAP TO ENTER</span></button>
+      <div id="object-layer" class="object-layer"></div>
       <div class="scene-hint glass" id="scene-hint">Double tap the door to enter</div>
-      <nav class="view-controls glass" aria-label="Room view controls">
-        <button id="prev-view" aria-label="Previous view">‹</button>
-        <button id="exit-room" class="room-button">EXTERIOR</button>
-        <div class="corner-dots" id="corner-dots" aria-label="Current corner"></div>
-        <button id="next-view" aria-label="Next view">›</button>
+      <nav class="view-controls glass" aria-label="Room and view controls">
+        <button id="prev-view" aria-label="Previous corner">‹</button>
+        <button id="room-map-button" class="room-button">HOUSE MAP</button>
+        <button id="door-action" class="door-action" hidden>ENTER</button>
+        <div class="corner-dots" id="corner-dots"></div>
+        <button id="next-view" aria-label="Next corner">›</button>
       </nav>
     </section>
-
     <aside id="catalog" class="catalog" aria-label="Furnishing catalog" aria-hidden="true">
-      <div class="catalog-head">
-        <div><p class="eyebrow">FURNISHING CATALOG</p><h2>Place your signature</h2></div>
-        <button id="shop-close" class="close-button" aria-label="Close catalog">×</button>
-      </div>
-      <div class="catalog-tabs" role="tablist">
-        <button class="active" data-mode="shop">SHOP</button>
-        <button data-mode="inventory">OWNED <span id="owned-count">0</span></button>
-      </div>
-      <div id="categories" class="categories" aria-label="Catalog categories"></div>
-      <div id="product-grid" class="product-grid"></div>
+      <div class="catalog-head"><div><p class="eyebrow">FURNISHING CATALOG</p><h2>Place your signature</h2></div><button id="shop-close" class="close-button" aria-label="Close catalog">×</button></div>
+      <div class="catalog-tabs" role="tablist"><button class="active" data-mode="shop">SHOP</button><button data-mode="inventory">OWNED <span id="owned-count">0</span></button><button data-mode="rooms">ROOMS <span id="rooms-count">0/9</span></button></div>
+      <div id="categories" class="categories"></div><div id="product-grid" class="product-grid"></div>
     </aside>
-
     <section id="inspector" class="inspector glass" aria-label="Selected object controls" aria-hidden="true">
       <div class="inspector-title"><strong id="selected-name">Object</strong><span id="selected-price"></span></div>
-      <label>SIZE <input id="scale-control" type="range" min="55" max="150" value="100"></label>
-      <label>ANGLE <input id="rotate-control" type="range" min="-24" max="24" value="0"></label>
-      <div class="inspector-actions">
-        <button id="flip-object">FLIP</button>
-        <button id="layer-down">BEHIND</button>
-        <button id="layer-up">FRONT</button>
-        <button id="store-object">STORE</button>
-        <button id="sell-object" class="danger">SELL</button>
-      </div>
+      <label><span>SIZE</span><input id="scale-control" type="range" min="45" max="165" value="100"></label>
+      <label><span>TILT</span><input id="tilt-control" type="range" min="-24" max="24" value="0"></label>
+      <label><span>ROTATE</span><input id="rotate-control" type="range" min="-65" max="65" value="0"></label>
+      <div class="inspector-actions"><button id="flip-object">FLIP</button><button id="layer-down">BEHIND</button><button id="layer-up">FRONT</button><button id="store-object">STORE</button><button id="sell-object" class="danger">SELL 65%</button></div>
     </section>
-
-    <dialog id="offers-dialog" class="offers-dialog">
-      <button id="offers-close" class="close-button" aria-label="Close offers">×</button>
-      <p class="eyebrow">ASHBURY ROW · PRIVATE SHOWING</p>
-      <h2>Your buyer offers</h2>
-      <div class="score-row"><span>DESIGN SCORE</span><strong id="design-score">0</strong><span>SPENT</span><strong id="spent-total">₢0</strong></div>
-      <div id="offers" class="offers"></div>
-      <p class="offer-note" id="offer-note"></p>
-    </dialog>
-
+    <dialog id="map-dialog" class="modal map-dialog"><button id="map-close" class="close-button" aria-label="Close house map">×</button><p class="eyebrow">ASHBURY ROW</p><h2>House map</h2><p class="modal-intro">Choose a room, or move naturally by double-tapping its doorway.</p><div id="room-grid" class="room-grid"></div></dialog>
+    <dialog id="offers-dialog" class="modal offers-dialog"><button id="offers-close" class="close-button" aria-label="Close offers">×</button><p class="eyebrow">ASHBURY ROW · PRIVATE SHOWING</p><h2>Your buyer offers</h2><div class="score-row"><span>DESIGN SCORE</span><strong id="design-score">0</strong><span>SPENT</span><strong id="spent-total">₢0</strong><span>ROOMS READY</span><strong id="ready-total">0/9</strong></div><div id="offers" class="offers"></div><p class="offer-note" id="offer-note"></p></dialog>
+    <dialog id="sale-dialog" class="modal sale-dialog"><p class="eyebrow">PROPERTY SOLD</p><h2 id="sale-title">A beautiful flip.</h2><strong id="sale-price" class="sale-price">₢0</strong><p id="sale-copy"></p><button id="continue-designing" class="primary">CONTINUE DESIGNING</button></dialog>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </main>
   <script src="app.js" defer></script>
