@@ -17,3 +17,8 @@
 .corner-0 .scene-bg,.corner-1 .scene-bg,.corner-2 .scene-bg,.corner-3 .scene-bg{inset:-2%;transform:scale(1.04)}
 .categories button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border-radius:999px;padding:8px 16px 9px;line-height:1;white-space:nowrap}
 .door-hotspot{pointer-events:none}
+.categories{gap:10px;padding:12px 4px 12px 0;touch-action:pan-x;overscroll-behavior-inline:contain;scroll-snap-type:x proximity}
+.categories button{min-height:28px;padding:6px 10px 7px;font-size:.61rem;scroll-snap-align:start}
+.placed-object.flat{transform-origin:50% 50%}
+.inspector label{grid-template-columns:74px 1fr}
+#rotate-label{white-space:nowrap;font-size:.58rem}

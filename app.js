@@ -39,12 +39,31 @@ const raw=[
  ["wall-sconce","Architectural Wall Sconce",179,"Lighting",ANY,"wall",145,"modern"],
  ["wall-mailbox","Wall-mounted Mailbox",159,"Exterior",["exterior"],"wall",165,"modern"],
  ["hose-reel","Garden Hose Reel",189,"Exterior",["exterior","patio"],"wall",175,"modern"],
- ["gas-grill","Premium Gas Grill",799,"Exterior",["patio"],"floor",240,"modern"]
+ ["gas-grill","Premium Gas Grill",799,"Exterior",["patio"],"floor",240,"modern"],
+ ["copper-gutters","Aged Copper Gutter Kit",1850,"Exterior",["exterior"],"wall",250,"luxury"],
+ ["brass-address-plaque","Cast Brass Address Plaque",145,"Exterior",["exterior"],"wall",125,"luxury"],
+ ["entry-runner","Charcoal Woven Runner",329,"Decor",["entry"],"floor",265,"warm"],
+ ["entry-hook-rail","Walnut Entry Hook Rail",169,"Entry",["entry"],"wall",180,"warm"],
+ ["modular-sectional","Warm Gray Modular Sectional",3199,"Seating",["living"],"floor",320,"modern"],
+ ["brass-arc-lamp","Arched Brass Floor Lamp",429,"Lighting",["living"],"floor",225,"luxury"],
+ ["hanging-pot-rack","Walnut Hanging Pot Rack",699,"Countertop",["kitchen"],"ceiling",220,"warm"],
+ ["travertine-fruit-bowl","Travertine Pear Bowl",189,"Decor",["kitchen","dining"],"surface",125,"organic"],
+ ["oval-dining-table","Oval Stone Dining Table",2299,"Tables",["dining"],"floor",305,"luxury",1],
+ ["smoked-glass-chandelier","Smoked Glass Chandelier",1299,"Lighting",["dining"],"ceiling",220,"luxury"],
+ ["canopy-bed","Walnut Canopy Bed",2899,"Bedroom",["bedroom"],"floor",315,"warm"],
+ ["bedroom-vanity","Walnut Dressing Vanity",1099,"Bedroom",["bedroom"],"floor",235,"warm",1],
+ ["soaking-tub","Sculptural Soaking Tub",2199,"Bathroom",["bathroom"],"floor",260,"luxury"],
+ ["heated-towel-rail","Brass Heated Towel Rail",549,"Bathroom",["bathroom"],"wall",175,"luxury"],
+ ["executive-desk","Fluted Walnut Executive Desk",1799,"Office",["office"],"floor",285,"luxury",1],
+ ["articulated-desk-lamp","Articulated Brass Desk Lamp",249,"Lighting",["office"],"surface",135,"warm"],
+ ["outdoor-sectional","Woven Outdoor Sectional",2699,"Exterior",["patio"],"floor",310,"modern"],
+ ["stone-fire-pit","Cast Stone Fire Pit",899,"Exterior",["patio"],"floor",210,"organic"]
 ];
-const PRODUCTS=raw.map(([id,name,price,category,rooms,placement,size,style,support=0])=>({id,name,price,category,rooms,placement,size,style,support:!!support,image:`assets/items/${id}.webp`}));
+const FLAT_IDS=new Set(["cream-rug","entry-runner"]);
+const PRODUCTS=raw.map(([id,name,price,category,rooms,placement,size,style,support=0])=>({id,name,price,category,rooms,placement,size,style,support:!!support,flat:FLAT_IDS.has(id),image:`assets/items/${id}.webp`}));
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const el={welcome:$("#welcome"),scene:$("#scene"),bg:$("#scene-bg"),layer:$("#object-layer"),door:$("#door-hotspot"),doorLabel:$("#door-label"),doorAction:$("#door-action"),room:$("#room-label"),corner:$("#corner-label"),dots:$("#corner-dots"),budget:$("#budget"),roomScore:$("#room-score"),catalog:$("#catalog"),grid:$("#product-grid"),cats:$("#categories"),owned:$("#owned-count"),roomsCount:$("#rooms-count"),inspector:$("#inspector"),selectedName:$("#selected-name"),selectedPrice:$("#selected-price"),scale:$("#scale-control"),tilt:$("#tilt-control"),rotate:$("#rotate-control"),map:$("#map-dialog"),roomGrid:$("#room-grid"),offers:$("#offers-dialog"),offersGrid:$("#offers"),sale:$("#sale-dialog"),toast:$("#toast"),openHouse:$("#open-house"),shopToggle:$("#shop-toggle"),prevView:$("#prev-view"),nextView:$("#next-view")};
-let state={budget:STARTING_BUDGET,room:"exterior",corner:0,objects:[],selected:null,mode:"shop",category:"All",sold:false},db,drag,doorTap=0,swipeStart;
+const el={welcome:$("#welcome"),scene:$("#scene"),bg:$("#scene-bg"),layer:$("#object-layer"),door:$("#door-hotspot"),doorLabel:$("#door-label"),doorAction:$("#door-action"),room:$("#room-label"),corner:$("#corner-label"),dots:$("#corner-dots"),budget:$("#budget"),roomScore:$("#room-score"),catalog:$("#catalog"),grid:$("#product-grid"),cats:$("#categories"),owned:$("#owned-count"),roomsCount:$("#rooms-count"),inspector:$("#inspector"),selectedName:$("#selected-name"),selectedPrice:$("#selected-price"),scale:$("#scale-control"),tilt:$("#tilt-control"),rotate:$("#rotate-control"),rotateLabel:$("#rotate-label"),map:$("#map-dialog"),roomGrid:$("#room-grid"),offers:$("#offers-dialog"),offersGrid:$("#offers"),sale:$("#sale-dialog"),toast:$("#toast"),openHouse:$("#open-house"),shopToggle:$("#shop-toggle"),prevView:$("#prev-view"),nextView:$("#next-view")};
+let state={budget:STARTING_BUDGET,room:"exterior",corner:0,objects:[],selected:null,mode:"shop",category:"All",sold:false,scoreCaps:{}},db,drag,doorTap=0,swipeStart;
 const money=n=>`₢${Math.round(n).toLocaleString("en-US")}`,product=id=>PRODUCTS.find(p=>p.id===id),currentCorner=()=>ROOMS[state.room].corners[state.corner];
 function toast(msg){el.toast.textContent=msg;el.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.toast.classList.remove("show"),1900)}
 function tone(freq){try{tone.ctx??=new AudioContext();const o=tone.ctx.createOscillator(),g=tone.ctx.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.022,tone.ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,tone.ctx.currentTime+.11);o.connect(g).connect(tone.ctx.destination);o.start();o.stop(tone.ctx.currentTime+.12)}catch{}}
@@ -53,7 +72,9 @@ function load(){return new Promise(ok=>{if(!db)return ok();const q=db.transactio
 function save(){if(db)db.transaction("save","readwrite").objectStore("save").put({...state,selected:null},SAVE_KEY)}
 async function enterGame(){try{await document.documentElement.requestFullscreen?.();await screen.orientation?.lock?.("landscape")}catch{}if(matchMedia("(orientation:landscape)").matches)el.welcome.classList.add("hidden")}
 function roomObjects(room=state.room){return state.objects.filter(o=>!o.stored&&o.room===room)}
-function roomScore(room){const os=roomObjects(room),cats=new Set(os.map(o=>product(o.productId)?.category)),spent=os.reduce((n,o)=>n+(product(o.productId)?.price||0),0);return Math.min(100,Math.round(os.length*16+cats.size*8+Math.min(18,spent/500)))}
+function roomScore(room){const os=roomObjects(room),cats=new Set(os.map(o=>product(o.productId)?.category)),spent=os.reduce((n,o)=>n+(product(o.productId)?.price||0),0),base=Math.min(100,Math.round(os.length*16+cats.size*8+Math.min(18,spent/500)));return Math.min(base,state.scoreCaps?.[room]??100)}
+function debitRoomScore(room,count=1){state.scoreCaps??={};state.scoreCaps[room]=Math.max(0,roomScore(room)-16*count)}
+function creditRoomScore(room,count=1){state.scoreCaps??={};state.scoreCaps[room]=Math.min(100,(state.scoreCaps[room]??100)+16*count)}
 function readyRooms(){return ALL_ROOMS.filter(r=>roomScore(r)===100).length}
 function houseCompletion(){return Math.round(ALL_ROOMS.reduce((sum,r)=>sum+roomScore(r),0)/ALL_ROOMS.length)}
 function imageStyle(p){return `background-image:url('${p.image}')`}
@@ -66,9 +87,9 @@ function render(){
  renderObjects();renderCatalog();renderMap();save();
 }
 function renderObjects(){
- el.layer.innerHTML="";state.objects.filter(o=>!o.stored&&o.room===state.room&&o.corner===state.corner).sort((a,b)=>a.z-b.z).forEach(o=>{const p=product(o.productId);if(!p)return;const node=document.createElement("div");node.className=`placed-object${o.uid===state.selected?" selected":""}`;node.dataset.uid=o.uid;node.dataset.placement=p.placement;node.style.cssText=`${imageStyle(p)};--object-size:${p.size}px;left:${o.x}%;top:${o.y}%;z-index:${o.z};transform:translate(-50%,-50%) perspective(760px) rotateY(${o.facing}deg) rotateZ(${o.tilt}deg) scaleX(${o.flip}) scale(${o.scale})`;node.setAttribute("role","button");node.setAttribute("aria-label",p.name);node.addEventListener("pointerdown",startDrag);el.layer.append(node)});renderInspector();
+ el.layer.innerHTML="";state.objects.filter(o=>!o.stored&&o.room===state.room&&o.corner===state.corner).sort((a,b)=>a.z-b.z).forEach(o=>{const p=product(o.productId);if(!p)return;const node=document.createElement("div");node.className=`placed-object${o.uid===state.selected?" selected":""}${p.flat?" flat":""}`;node.dataset.uid=o.uid;node.dataset.placement=p.placement;const rotation=p.flat?`rotateX(${o.tilt}deg) rotateZ(${o.facing}deg)`:`rotateY(${o.facing}deg) rotateZ(${o.tilt}deg)`;node.style.cssText=`${imageStyle(p)};--object-size:${p.size}px;left:${o.x}%;top:${o.y}%;z-index:${o.z};transform:translate(-50%,-50%) perspective(760px) ${rotation} scaleX(${o.flip}) scale(${o.scale})`;node.setAttribute("role","button");node.setAttribute("aria-label",p.name);node.addEventListener("pointerdown",startDrag);el.layer.append(node)});renderInspector();
 }
-function renderInspector(){const o=selected(),p=o&&product(o.productId);el.inspector.classList.toggle("visible",!!o);el.inspector.setAttribute("aria-hidden",String(!o));if(!o)return;el.selectedName.textContent=p.name;el.selectedPrice.textContent=money(p.price);el.scale.value=Math.round(o.scale*100);el.tilt.value=o.tilt;el.rotate.value=o.facing}
+function renderInspector(){const o=selected(),p=o&&product(o.productId);el.inspector.classList.toggle("visible",!!o);el.inspector.setAttribute("aria-hidden",String(!o));if(!o)return;el.selectedName.textContent=p.name;el.selectedPrice.textContent=money(p.price);el.scale.value=Math.round(o.scale*100);el.tilt.value=o.tilt;el.rotate.min=p.flat?-180:-65;el.rotate.max=p.flat?180:65;el.rotateLabel.textContent=p.flat?"ROTATE · 2D":"ROTATE · 2.5D";el.rotate.value=o.facing}
 function categories(){return ["All",...new Set(PRODUCTS.map(p=>p.category))]}
 function renderCatalog(){
  el.owned.textContent=state.objects.length;el.roomsCount.textContent=`${readyRooms()}/9`;
@@ -79,8 +100,8 @@ function renderCatalog(){
  el.grid.querySelectorAll(".product-card").forEach(b=>b.onclick=()=>b.dataset.uid?placeOwned(b.dataset.uid):buy(b.dataset.id));
 }
 function renderMap(){el.roomGrid.innerHTML=ALL_ROOMS.map(r=>`<button class="map-room ${r===state.room?"current":""}" data-room="${r}"><div class="map-room-img" style="background-image:url('${ROOMS[r].corners[0].image}')"></div><div class="map-room-meta"><strong>${ROOMS[r].name}</strong><span>${roomScore(r)}%</span></div></button>`).join("");el.roomGrid.querySelectorAll(".map-room").forEach(b=>b.onclick=()=>{el.map.close();goRoom(b.dataset.room)})}
-function buy(id){const p=product(id);if(!p||state.budget<p.price)return toast("Not enough Cruzeiros for this piece");state.budget-=p.price;const allowed=p.rooms.includes(state.room),room=allowed?state.room:p.rooms[0],stored=!allowed;const o={uid:crypto.randomUUID(),productId:id,room,corner:allowed?state.corner:0,x:50,y:p.placement==="wall"?40:p.placement==="ceiling"?27:p.placement==="surface"?58:73,scale:1,tilt:0,facing:0,flip:1,z:state.objects.length+1,stored,parentUid:null};state.objects.push(o);state.selected=stored?null:o.uid;render();toast(stored?`${p.name} saved to Owned · suited for ${ROOMS[room].name}`:`${p.name} placed · ${money(state.budget)} left`);tone(330)}
-function placeOwned(uid){const o=state.objects.find(x=>x.uid===uid),p=o&&product(o.productId);if(!o)return;if(!p.rooms.includes(state.room)){toast(`${p.name} is suited for ${p.rooms.map(r=>ROOMS[r].name).join(", ")}`);return}o.stored=false;o.room=state.room;o.corner=state.corner;o.x=50;o.y=p.placement==="wall"?40:p.placement==="ceiling"?27:p.placement==="surface"?58:73;o.parentUid=null;state.selected=uid;closeCatalog();render();toast("Piece ready to position")}
+function buy(id){const p=product(id);if(!p||state.budget<p.price)return toast("Not enough Cruzeiros for this piece");state.budget-=p.price;creditRoomScore(state.room);const o={uid:crypto.randomUUID(),productId:id,room:state.room,corner:state.corner,x:50,y:p.placement==="wall"?40:p.placement==="ceiling"?27:p.placement==="surface"?58:73,scale:1,tilt:0,facing:0,flip:1,z:state.objects.length+1,stored:false,parentUid:null};state.objects.push(o);state.selected=o.uid;render();toast(`${p.name} placed · ${money(state.budget)} left`);tone(330)}
+function placeOwned(uid){const o=state.objects.find(x=>x.uid===uid),p=o&&product(o.productId);if(!o)return;creditRoomScore(state.room);o.stored=false;o.room=state.room;o.corner=state.corner;o.x=50;o.y=p.placement==="wall"?40:p.placement==="ceiling"?27:p.placement==="surface"?58:73;o.parentUid=null;state.selected=uid;closeCatalog();render();toast("Piece ready to position")}
 function selected(){return state.objects.find(o=>o.uid===state.selected)}
 function startDrag(e){e.stopPropagation();const o=state.objects.find(x=>x.uid===e.currentTarget.dataset.uid);state.selected=o.uid;drag={o,node:e.currentTarget,id:e.pointerId,lastX:o.x,lastY:o.y};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.classList.add("dragging","selected");renderInspector()}
 el.layer.addEventListener("pointermove",e=>{if(!drag||drag.id!==e.pointerId)return;const r=el.scene.getBoundingClientRect(),p=product(drag.o.productId),oldX=drag.o.x,oldY=drag.o.y;drag.o.x=Math.max(3,Math.min(97,(e.clientX-r.left)/r.width*100));let y=(e.clientY-r.top)/r.height*100;if(p.placement==="wall")y=Math.max(19,Math.min(61,y));else if(p.placement==="ceiling")y=Math.max(12,Math.min(42,y));else if(p.placement==="surface")y=Math.max(37,Math.min(73,y));else y=Math.max(46,Math.min(88,y));drag.o.y=y;if(p.support){const dx=drag.o.x-oldX,dy=drag.o.y-oldY;state.objects.filter(c=>c.parentUid===drag.o.uid).forEach(c=>{c.x+=dx;c.y+=dy})}drag.node.style.left=`${drag.o.x}%`;drag.node.style.top=`${drag.o.y}%`});
@@ -89,8 +110,8 @@ function snapToSurface(o){const p=product(o.productId);if(p.placement!=="surface
 function mutate(fn){const o=selected();if(!o)return;fn(o);renderObjects();save()}
 el.scale.oninput=e=>mutate(o=>o.scale=Number(e.target.value)/100);el.tilt.oninput=e=>mutate(o=>o.tilt=Number(e.target.value));el.rotate.oninput=e=>mutate(o=>o.facing=Number(e.target.value));
 $("#flip-object").onclick=()=>mutate(o=>o.flip*=-1);$("#layer-down").onclick=()=>mutate(o=>o.z=Math.max(1,o.z-1));$("#layer-up").onclick=()=>mutate(o=>o.z+=1);
-$("#store-object").onclick=()=>{const o=selected();if(!o)return;o.stored=true;state.objects.filter(c=>c.parentUid===o.uid).forEach(c=>{c.stored=true;c.parentUid=null});state.selected=null;render();toast("Moved to Owned")};
-$("#sell-object").onclick=()=>{const o=selected();if(!o)return;const p=product(o.productId),refund=Math.round(p.price*.65);state.objects.filter(c=>c.parentUid===o.uid).forEach(c=>{c.stored=true;c.parentUid=null});state.objects=state.objects.filter(x=>x.uid!==o.uid);state.budget+=refund;state.selected=null;render();toast(`${p.name} sold for ${money(refund)}`)};
+$("#store-object").onclick=()=>{const o=selected();if(!o)return;const children=state.objects.filter(c=>c.parentUid===o.uid&&!c.stored);debitRoomScore(o.room,1+children.length);o.stored=true;children.forEach(c=>{c.stored=true;c.parentUid=null});state.selected=null;render();toast("Moved to Owned · room score updated")};
+$("#sell-object").onclick=()=>{const o=selected();if(!o)return;const p=product(o.productId),refund=Math.round(p.price*.65),children=state.objects.filter(c=>c.parentUid===o.uid&&!c.stored);debitRoomScore(o.room,1+children.length);children.forEach(c=>{c.stored=true;c.parentUid=null});state.objects=state.objects.filter(x=>x.uid!==o.uid);state.budget+=refund;state.selected=null;render();toast(`${p.name} sold for ${money(refund)} · room score updated`)};
 function changeView(d){const count=ROOMS[state.room].corners.length;if(count<2)return;state.corner=(state.corner+d+count)%count;state.selected=null;render();tone(180)}
 function goRoom(room,from=state.room){if(!ROOMS[room])return;state.room=room;const returnView=ROOMS[room].corners.findIndex(c=>c.target===from||c.returnFrom?.includes(from));state.corner=returnView>=0?returnView:0;state.selected=null;closeCatalog();render();toast(ROOMS[room].name);tone(240)}
 function enterDoor(){const target=currentCorner().target;if(target)goRoom(target,state.room)}
