@@ -10,3 +10,10 @@
 @media(max-height:520px){.hud{height:56px;top:8px}.inspector{top:72px}.product-visual{height:84px}.product-card{min-height:145px}.catalog{padding-top:15px}.catalog-head h2{font-size:1.25rem}.welcome-panel{transform:scale(.82)}.room-grid{grid-template-columns:repeat(5,1fr)}.map-room-img{height:56px}.modal{padding:18px}.modal h2{font-size:1.5rem}}
 @media(orientation:portrait){.hud,.scene,.catalog,.inspector,.modal{filter:blur(4px);pointer-events:none}.welcome,.welcome.hidden{visibility:visible;opacity:1;pointer-events:auto}.welcome-copy::after{content:" Rotate your device to continue.";color:#fff}}
 @media(max-width:820px) and (orientation:landscape){.hud{grid-template-columns:130px 1fr auto}.property-title{display:none}.wordmark span:last-child{display:none}.secondary,.room-score{display:none}.budget{min-width:92px}.budget strong{font-size:1.05rem}.catalog{width:370px}.inspector{width:205px}.modal{padding:18px}.offers{gap:6px}.offer{padding:9px}.offer p{display:none}}
+
+/* v3 interaction and landscape refinements */
+.secondary:disabled{opacity:.34;cursor:not-allowed;background:rgba(0,0,0,.24)}
+.icon-button[hidden]{display:none}
+.corner-0 .scene-bg,.corner-1 .scene-bg,.corner-2 .scene-bg,.corner-3 .scene-bg{inset:-2%;transform:scale(1.04)}
+.categories button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;border-radius:999px;padding:8px 16px 9px;line-height:1;white-space:nowrap}
+.door-hotspot{pointer-events:none}
