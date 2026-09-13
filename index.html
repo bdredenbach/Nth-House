@@ -35,6 +35,9 @@
     <section id="scene" class="scene" aria-label="Property scene">
       <div id="scene-bg" class="scene-bg"></div><div class="scene-shade"></div>
       <button id="door-hotspot" class="door-hotspot" aria-label="Double tap doorway"><span id="door-label">DOUBLE TAP TO ENTER</span></button>
+      <div id="slot-layer" class="slot-layer" aria-live="polite"></div>
+      <div id="fixed-object-layer" class="fixed-object-layer"></div>
+      <div class="architectural-occlusion" aria-hidden="true"></div>
       <div id="object-layer" class="object-layer"></div>
       <nav class="view-controls glass" aria-label="Room and view controls">
         <button id="prev-view" aria-label="Previous corner">‹</button>
@@ -51,6 +54,7 @@
     </aside>
     <section id="inspector" class="inspector glass" aria-label="Selected object controls" aria-hidden="true">
       <div class="inspector-title"><strong id="selected-name">Object</strong><span id="selected-price"></span></div>
+      <p id="placement-note" class="placement-note" hidden>FIXED INSTALLATION · STORED IN THIS ROOM ACROSS EVERY VIEW</p>
       <label><span>SIZE</span><input id="scale-control" type="range" min="45" max="165" value="100"></label>
       <label><span>TILT</span><input id="tilt-control" type="range" min="-24" max="24" value="0"></label>
       <label><span id="rotate-label">ROTATE · 2.5D</span><input id="rotate-control" type="range" min="-65" max="65" value="0"></label>
